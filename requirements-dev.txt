@@ -1,0 +1,11 @@
+# 開発・テスト用依存関係
+# 本番環境では不要
+
+# requirements.txtの依存関係を含む
+-r requirements.txt
+
+# テスト関連
+pytest>=7.4.0
+pytest-cov>=4.1.0
+pytest-mock>=3.12.0
+
