@@ -88,6 +88,7 @@ x-airflow-common:
       condition: service_healthy
 
 services:
+  # Airflow用PostgreSQL
   postgres:
     image: postgres:16
     environment:
@@ -98,6 +99,24 @@ services:
       - postgres-db-volume:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 10s
+      retries: 5
+      start_period: 5s
+    restart: always
+
+  # アプリケーション用PostgreSQL
+  postgres-app:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${POSTGRES_APP_USER:-fivech_user}
+      POSTGRES_PASSWORD: ${POSTGRES_APP_PASSWORD:-fivech_password}
+      POSTGRES_DB: ${POSTGRES_APP_DB:-fivech_db}
+    ports:
+      - "${POSTGRES_APP_PORT:-5433}:5432"
+    volumes:
+      - postgres-app-db-volume:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${POSTGRES_APP_USER:-fivech_user}"]
       interval: 10s
       retries: 5
       start_period: 5s
@@ -335,3 +354,4 @@ services:
 
 volumes:
   postgres-db-volume:
+  postgres-app-db-volume:

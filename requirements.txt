@@ -1,0 +1,12 @@
+# スクレイピング関連
+requests==2.32.5
+beautifulsoup4==4.14.3
+lxml==6.0.2
+
+# DB関連
+SQLAlchemy==2.0.45
+alembic==1.17.2
+psycopg2-binary==2.9.11
+
+# 環境変数管理
+python-dotenv==1.2.1
