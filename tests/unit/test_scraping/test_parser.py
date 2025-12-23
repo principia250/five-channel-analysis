@@ -88,6 +88,27 @@ class TestParseBoardPage:
             assert thread.path.startswith("/test/read.cgi/")
             assert "/l" not in thread.path  # /l50などのサフィックスが削除されている
 
+    def test_parse_board_page_excludes_threads_by_title(self, monkeypatch):
+        # 除外対象タイトルを返す関数をモンキーパッチ
+        monkeypatch.setattr(
+            "src.scraping.parser.get_excluded_thread_titles",
+            lambda: ["除外スレッド1", "除外スレッド2"],
+        )
+
+        html = '''
+        <div style="background: #BEB;">
+          <p style="background: #BEB;"><a href="/test/read.cgi/prog/1000000001/l50">除外スレッド1</a></p>
+          <p style="background: #BEB;"><a href="/test/read.cgi/prog/1000000002/l50">対象スレッド</a></p>
+          <p style="background: #BEB;"><a href="/test/read.cgi/prog/1000000003/l50">除外スレッド2</a></p>
+        </div>
+        '''
+
+        result = parse_board_page(html)
+
+        # 除外スレッド1, 2 は結果に含まれず、対象スレッドのみが残る
+        assert len(result) == 1
+        assert result[0].path == "/test/read.cgi/prog/1000000002"
+
 
 class TestParseThreadPage:
     """parse_thread_page()のテスト"""

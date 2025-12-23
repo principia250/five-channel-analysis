@@ -37,6 +37,15 @@ def sleep_with_jitter(base_seconds: float, jitter_range: float = 0.5) -> None:
     time.sleep(max(0, sleep_time))
 
 
+def get_excluded_thread_titles() -> list[str]:
+    # プロジェクト共通の除外スレッドタイトルをここで管理する
+    EXCLUDED_THREAD_TITLES: list[str] = [
+        "★ UPLIFT プレミアム・サービスのお知らせ",
+        "★ 5ちゃんねるから新しいお知らせです",
+    ]
+    return EXCLUDED_THREAD_TITLES
+
+
 def extract_thread_id_from_url(url: str) -> Optional[str]:
     try:
         parsed = urlparse(url)
