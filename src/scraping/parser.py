@@ -32,7 +32,12 @@ def parse_board_page(html: str) -> List[ThreadInfo]:
         a_tag = p_tag.find('a', href=re.compile(r'/test/read\.cgi/'))
         if a_tag and a_tag.get('href'):
             href = a_tag['href']
-            title = a_tag.get_text(strip=True)
+            raw_title = a_tag.get_text(strip=True)
+            
+            # 先頭の「数字:  」と末尾の「(数字)」を除去して実際のスレッドタイトルを取得
+            # 例: "1:  ★ UPLIFT プレミアム・サービスのお知らせ (2)" -> "★ UPLIFT プレミアム・サービスのお知らせ"
+            title = re.sub(r'^\d+:\s*', '', raw_title)  # 先頭の「数字:  」を除去
+            title = re.sub(r'\s*\(\d+\)$', '', title)   # 末尾の「(数字)」を除去
 
             # 取得対象外のスレッドタイトルはスキップ
             if title in excluded_titles:
