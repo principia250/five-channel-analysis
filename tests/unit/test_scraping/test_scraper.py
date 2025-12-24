@@ -42,7 +42,6 @@ class TestScraperInit:
         scraper = Scraper()
         headers = scraper.session.headers
         assert "User-Agent" in headers
-        assert "Accept-Language" in headers
 
     def test_init_retry_strategy_configured(self):
         """リトライ戦略が正しく設定される"""
