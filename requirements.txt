@@ -10,3 +10,6 @@ psycopg2-binary==2.9.11
 
 # 環境変数管理
 python-dotenv==1.2.1
+
+# 形態素解析
+mecab-python3==1.0.12
