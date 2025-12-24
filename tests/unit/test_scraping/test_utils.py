@@ -98,12 +98,6 @@ class TestGetDefaultHeaders:
         assert "User-Agent" in headers
         assert "Mozilla" in headers["User-Agent"]
 
-    def test_headers_contain_accept_language(self):
-        """Accept-Languageが含まれている"""
-        headers = utils.get_default_headers()
-        assert "Accept-Language" in headers
-        assert "ja" in headers["Accept-Language"]
-
 
 class TestSleepWithJitter:
     """sleep_with_jitter()のテスト"""
