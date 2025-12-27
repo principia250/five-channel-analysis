@@ -83,6 +83,7 @@ x-airflow-common:
     - ${AIRFLOW_PROJ_DIR:-.}/plugins:/opt/airflow/plugins
     - ${AIRFLOW_PROJ_DIR:-.}/src:/opt/airflow/src
     - ${AIRFLOW_PROJ_DIR:-.}/.env:/opt/airflow/.env:ro  # .envファイルを読み取り専用でマウント
+    - ${AIRFLOW_PROJ_DIR:-.}/alembic.ini:/opt/airflow/alembic.ini:ro  # alembic.iniをマウント
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
     &airflow-common-depends-on
