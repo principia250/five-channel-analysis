@@ -47,6 +47,11 @@ class PipelineRun(Base):
     )
     config: Mapped[dict] = mapped_column(JSONB, nullable=False)
     code_version: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    is_recovered: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+    )
     created_at: Mapped[datetime] = mapped_column(
         server_default=func.now(),
         nullable=False,
