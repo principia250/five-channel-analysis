@@ -13,3 +13,8 @@ python-dotenv==1.2.1
 
 # 形態素解析
 mecab-python3==1.0.12
+
+# 統計計算
+numpy==2.4.0
+scipy==1.16.3
+statsmodels==0.14.6
