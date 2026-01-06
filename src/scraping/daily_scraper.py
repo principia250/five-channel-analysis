@@ -59,7 +59,7 @@ def collect_posts_for_date(
         例: "https://medaka.5ch.net"
     board_path : str
         板トップページのパス。
-        例: "/test/read.cgi/prog/" （末尾スラッシュ有り/無しどちらでも可）
+        例: "/prog/" （末尾スラッシュ有り/無しどちらでも可）
     target_date : datetime.date, optional
         収集対象の日付（日本時間）。省略時は「現在のJST日付 - 1日」を自動計算。
     timeout, max_retries, backoff_factor, request_delay :
