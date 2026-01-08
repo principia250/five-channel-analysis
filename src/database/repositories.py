@@ -54,6 +54,20 @@ class PipelineRunRepository:
                 pipeline_run.finished_at = finished_at
             self.session.flush()
         return pipeline_run
+    
+    def get_by_date_range_and_board(
+        self,
+        start_date: date,
+        end_date: date,
+        board_key: str,
+    ) -> list[PipelineRun]:
+        return self.session.query(PipelineRun).filter(
+            and_(
+                PipelineRun.target_date >= start_date,
+                PipelineRun.target_date <= end_date,
+                PipelineRun.board_key == board_key,
+            )
+        ).all()
 
 
 class TermRepository:
@@ -140,6 +154,42 @@ class DailyTermStatsRepository:
             return existing
         else:
             return self.create(stats)
+    
+    def get_weekly_aggregation(
+        self,
+        start_date: date,
+        end_date: date,
+        board_key: str,
+        valid_dates: Optional[set[date]] = None,
+    ) -> list[dict]:
+        from sqlalchemy import func as sql_func
+        
+        query = self.session.query(
+            DailyTermStats.term_id,
+            sql_func.sum(DailyTermStats.post_hits).label('post_hits'),
+            sql_func.sum(DailyTermStats.thread_hits).label('thread_hits'),
+        ).filter(
+            and_(
+                DailyTermStats.date >= start_date,
+                DailyTermStats.date <= end_date,
+                DailyTermStats.board_key == board_key,
+            )
+        )
+        
+        # valid_datesが指定されている場合、その日付のみをフィルタリング
+        if valid_dates is not None:
+            query = query.filter(DailyTermStats.date.in_(valid_dates))
+        
+        results = query.group_by(DailyTermStats.term_id).all()
+        
+        return [
+            {
+                'term_id': r.term_id,
+                'post_hits': int(r.post_hits) if r.post_hits else 0,
+                'thread_hits': int(r.thread_hits) if r.thread_hits else 0,
+            }
+            for r in results
+        ]
 
 
 class WeeklyTermTrendsRepository:
@@ -166,6 +216,30 @@ class WeeklyTermTrendsRepository:
         
         if limit:
             query = query.limit(limit)
+        
+        return query.all()
+    
+    def get_by_term_and_week_range(
+        self,
+        term_id: int,
+        board_key: str,
+        start_week_date: date,
+        end_week_date: date,
+        order_asc: bool = True,
+    ) -> list[WeeklyTermTrends]:
+        query = self.session.query(WeeklyTermTrends).filter(
+            and_(
+                WeeklyTermTrends.term_id == term_id,
+                WeeklyTermTrends.board_key == board_key,
+                WeeklyTermTrends.week_start_date >= start_week_date,
+                WeeklyTermTrends.week_start_date <= end_week_date,
+            )
+        )
+        
+        if order_asc:
+            query = query.order_by(WeeklyTermTrends.week_start_date.asc())
+        else:
+            query = query.order_by(WeeklyTermTrends.week_start_date.desc())
         
         return query.all()
     
@@ -290,4 +364,24 @@ class PipelineMetricsDailyRepository:
             return existing
         else:
             return self.create(metrics)
+    
+    def get_weekly_total_posts(
+        self,
+        start_date: date,
+        end_date: date,
+        board_key: str,
+    ) -> int:
+        from sqlalchemy import func as sql_func
+        
+        result = self.session.query(
+            sql_func.sum(PipelineMetricsDaily.fetched_posts)
+        ).filter(
+            and_(
+                PipelineMetricsDaily.date >= start_date,
+                PipelineMetricsDaily.date <= end_date,
+                PipelineMetricsDaily.board_key == board_key,
+            )
+        ).scalar()
+        
+        return int(result) if result else 0
 

@@ -88,6 +88,48 @@ class TestParseBoardPage:
             assert thread.path.startswith("/test/read.cgi/")
             assert "/l" not in thread.path  # /l50などのサフィックスが削除されている
 
+    def test_parse_board_page_excludes_threads_by_title(self, monkeypatch):
+        # 除外対象タイトルを返す関数をモンキーパッチ
+        monkeypatch.setattr(
+            "src.scraping.parser.get_excluded_thread_titles",
+            lambda: ["除外スレッド1", "除外スレッド2"],
+        )
+
+        html = '''
+        <div style="background: #BEB;">
+          <p style="background: #BEB;"><a href="/test/read.cgi/prog/1000000001/l50">1:  除外スレッド1 (2)</a></p>
+          <p style="background: #BEB;"><a href="/test/read.cgi/prog/1000000002/l50">2:  対象スレッド (5)</a></p>
+          <p style="background: #BEB;"><a href="/test/read.cgi/prog/1000000003/l50">3:  除外スレッド2 (10)</a></p>
+        </div>
+        '''
+
+        result = parse_board_page(html)
+
+        # 除外スレッド1, 2 は結果に含まれず、対象スレッドのみが残る
+        assert len(result) == 1
+        assert result[0].path == "/test/read.cgi/prog/1000000002"
+
+    def test_parse_board_page_normalizes_thread_title(self, monkeypatch):
+        """スレッドタイトルから先頭の「数字:  」と末尾の「(数字)」が正しく除去される"""
+        # 除外対象タイトルを返す関数をモンキーパッチ
+        monkeypatch.setattr(
+            "src.scraping.parser.get_excluded_thread_titles",
+            lambda: ["★ UPLIFT プレミアム・サービスのお知らせ"],
+        )
+
+        html = '''
+        <div style="background: #BEB;">
+          <p style="background: #BEB;"><a href="/test/read.cgi/prog/1000000001/l50">1:  ★ UPLIFT プレミアム・サービスのお知らせ (2)</a></p>
+          <p style="background: #BEB;"><a href="/test/read.cgi/prog/1000000002/l50">2:  通常のスレッド (5)</a></p>
+        </div>
+        '''
+
+        result = parse_board_page(html)
+
+        # 除外スレッドは結果に含まれず、通常のスレッドのみが残る
+        assert len(result) == 1
+        assert result[0].path == "/test/read.cgi/prog/1000000002"
+
 
 class TestParseThreadPage:
     """parse_thread_page()のテスト"""

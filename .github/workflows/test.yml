@@ -1,0 +1,37 @@
+name: Test
+
+on:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # コードを実行環境に配置
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      # Python環境をセットアップ
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      
+      # 依存関係のインストール
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mecab libmecab-dev mecab-ipadic-utf8
+      
+      # Python依存関係のインストール
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+      
+      # pytestの実行
+      - name: Run pytest
+        run: |
+          pytest tests/ -v
