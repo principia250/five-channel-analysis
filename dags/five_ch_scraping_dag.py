@@ -14,7 +14,10 @@ from airflow.operators.python import PythonOperator
 from src.analysis.daily_processor import DailyProcessor
 from src.analysis.weekly_processor import WeeklyProcessor
 from src.database.models import PipelineRun
-from src.database.repositories import PipelineRunRepository
+from src.database.repositories import (
+    DailyTermStatsRepository,
+    PipelineRunRepository,
+)
 from src.database.session import get_db
 from src.scraping.daily_scraper import collect_posts_for_date
 
@@ -179,6 +182,43 @@ def run_weekly_analysis(**context) -> None:
         raise
 
 
+def run_cleanup_daily_term_stats(**context) -> None:
+    execution_date = context.get("execution_date")
+    if execution_date is None:
+        execution_date = datetime.utcnow().replace(tzinfo=timezone.utc)
+    
+    # execution_dateをJSTに変換
+    execution_jst = execution_date.replace(tzinfo=timezone.utc).astimezone(JST)
+    execution_date_jst = execution_jst.date()
+    
+    # 2週間前の日付を計算（この日付より古いレコードを削除）
+    cutoff_date = execution_date_jst - timedelta(days=14)
+    
+    logger.info(
+        f"daily_term_stats削除開始: execution_date={execution_date_jst}, "
+        f"cutoff_date={cutoff_date}, board_key={SCRAPING_BOARD_KEY}"
+    )
+    
+    try:
+        with get_db() as session:
+            daily_stats_repo = DailyTermStatsRepository(session)
+            deleted_count = daily_stats_repo.delete_older_than(
+                cutoff_date=cutoff_date,
+                board_key=SCRAPING_BOARD_KEY,
+            )
+            session.commit()
+            
+            logger.info(
+                f"daily_term_stats削除完了: "
+                f"deleted_count={deleted_count}, "
+                f"cutoff_date={cutoff_date}"
+            )
+    
+    except Exception as e:
+        logger.error(f"daily_term_stats削除エラー: {e}", exc_info=True)
+        raise
+
+
 # 日次データ収集DAG
 # JST 2時 = UTC 17時（前日）
 daily_dag = DAG(
@@ -228,4 +268,13 @@ weekly_analysis_task = PythonOperator(
     python_callable=run_weekly_analysis,
     dag=weekly_dag,
 )
+
+weekly_cleanup_task = PythonOperator(
+    task_id="cleanup_daily_term_stats",
+    python_callable=run_cleanup_daily_term_stats,
+    dag=weekly_dag,
+)
+
+# タスクの依存関係を設定
+weekly_analysis_task >> weekly_cleanup_task
 

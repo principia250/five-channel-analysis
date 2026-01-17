@@ -190,6 +190,20 @@ class DailyTermStatsRepository:
             }
             for r in results
         ]
+    
+    def delete_older_than(
+        self,
+        cutoff_date: date,
+        board_key: str,
+    ) -> int:
+        deleted_count = self.session.query(DailyTermStats).filter(
+            and_(
+                DailyTermStats.date < cutoff_date,
+                DailyTermStats.board_key == board_key,
+            )
+        ).delete(synchronize_session=False)
+        
+        return deleted_count
 
 
 class WeeklyTermTrendsRepository:
